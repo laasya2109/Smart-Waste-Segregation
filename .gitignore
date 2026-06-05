@@ -1,0 +1,17 @@
+# Environments
+.env
+
+# Python caching
+__pycache__/
+*.pyc
+
+# Local SQLite databases
+*.db
+*.db-journal
+
+# Large YOLO model weights
+*.pt
+
+# Upload directories
+static/uploads/*
+!static/uploads/.gitkeep
