@@ -173,7 +173,7 @@ function navigateToTab(tabId) {
     const titleMap = {
         'panel-dashboard': 'Your Impact',
         'panel-classify': 'Scan Waste',
-        'panel-nlp': 'Search',
+        'panel-nlp': 'EcoBot Assistant',
         'panel-map': 'Recycling Map',
         'panel-history': 'History',
         'panel-play': 'Eco Play'
@@ -208,6 +208,10 @@ function navigateToTab(tabId) {
         setTimeout(initializeMap, 100);
     } else if (tabId === 'panel-play') {
         if (typeof resetGame === "function") resetGame();
+    } else if (tabId === 'panel-classify') {
+        if (typeof adjustViewportImageSize === "function") {
+            setTimeout(adjustViewportImageSize, 50);
+        }
     }
 }
 

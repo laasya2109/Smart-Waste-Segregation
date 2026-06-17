@@ -4,13 +4,11 @@
 
 // --- Check Session on Load ---
 function checkSession() {
-    const session = localStorage.getItem('ecostation_user');
-    if (session) {
-        currentUser = JSON.parse(session);
-        loginSuccess(currentUser);
-    } else {
-        showLandingPage();
-    }
+    // Clear any previous session so the user starts at the landing page,
+    // goes to the login screen, and then logs in to access the dashboard.
+    localStorage.removeItem('ecostation_user');
+    currentUser = null;
+    showLandingPage();
 }
 
 // --- Toggle Authentication Forms ---

@@ -23,6 +23,7 @@ function setupDropzone() {
         uploadBox.classList.remove('hidden');
         captureBox.classList.add('hidden');
         stopWebcam();
+        fileInput.click();
     });
 
     tabCaptureBtn.addEventListener('click', () => {
@@ -135,6 +136,13 @@ function setupDropzone() {
             }, 300);
         }
     });
+
+    // Setup auto-sizing for the bounding box wrapper
+    const scannedImg = document.getElementById('scanned-image-output');
+    if (scannedImg) {
+        scannedImg.addEventListener('load', adjustViewportImageSize);
+    }
+    window.addEventListener('resize', adjustViewportImageSize);
 }
 
 async function startWebcam() {
@@ -529,6 +537,9 @@ async function uploadAndClassify() {
                 impactContainer.innerHTML = `No recyclable items identified in this scan. Safe disposal ensures toxic residues do not contaminate surrounding ecosystems.`;
             }
             
+            // Adjust container size to preserve aspect ratio and fit viewport
+            adjustViewportImageSize();
+            
             // Draw real bounding boxes returned by YOLOv8 model
             drawBoundingBoxes(data.objects);
 
@@ -576,4 +587,44 @@ function drawBoundingBoxes(objects) {
         div.appendChild(label);
         overlay.appendChild(div);
     });
+}
+
+function adjustViewportImageSize() {
+    const debugDiv = document.getElementById('debug-layout-overlay');
+    if (debugDiv) debugDiv.remove();
+
+    const img = document.getElementById('scanned-image-output');
+    const wrapper = img ? img.closest('.bounding-box-wrapper') : null;
+    const viewport = img ? img.closest('.detection-output-viewport') : null;
+    
+    if (!img || !wrapper || !viewport) return;
+    
+    // If the image is not fully loaded/decoded by the browser yet, wait and retry
+    if (img.naturalWidth === 0 || img.naturalHeight === 0) {
+        setTimeout(adjustViewportImageSize, 50);
+        return;
+    }
+    
+    const imgWidth = img.naturalWidth;
+    const imgHeight = img.naturalHeight;
+    
+    const viewportWidth = viewport.clientWidth - 16;
+    const viewportHeight = viewport.clientHeight - 16;
+    
+    if (viewportWidth <= 0 || viewportHeight <= 0) return;
+    
+    const imgRatio = imgWidth / imgHeight;
+    const viewportRatio = viewportWidth / viewportHeight;
+    
+    let targetWidth, targetHeight;
+    if (imgRatio > viewportRatio) {
+        targetWidth = viewportWidth;
+        targetHeight = viewportWidth / imgRatio;
+    } else {
+        targetHeight = viewportHeight;
+        targetWidth = viewportHeight * imgRatio;
+    }
+    
+    wrapper.style.width = `${Math.round(targetWidth)}px`;
+    wrapper.style.height = `${Math.round(targetHeight)}px`;
 }

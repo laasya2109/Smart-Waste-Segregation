@@ -22,6 +22,19 @@ UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'static', 'uploads')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Load environment variables from .env if present
+env_path = os.path.join(os.path.dirname(__file__), '.env')
+if os.path.exists(env_path):
+    try:
+        with open(env_path, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#'):
+                    key_val = line.split('=', 1)
+                    if len(key_val) == 2:
+                        os.environ[key_val[0].strip()] = key_val[1].strip()
+    except Exception as e:
+        print("Failed to manually parse .env file:", e)
+
 try:
     from dotenv import load_dotenv
     load_dotenv()
@@ -29,6 +42,10 @@ except ImportError:
     pass
 
 GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
+if GROQ_API_KEY:
+    print(f"[*] Loaded GROQ_API_KEY: {GROQ_API_KEY[:8]}... (length: {len(GROQ_API_KEY)})")
+else:
+    print("[!] GROQ_API_KEY is missing or empty!")
 
 try:
     from ultralytics import YOLO
@@ -47,377 +64,438 @@ except Exception as e:
 
 # Comprehensive dictionary mapping waste items to categories, bins, recyclability status, and instructions.
 OBJECT_MAPPING = {
-    # Plastic Waste
+    # --- PLASTIC WASTE ---
     "plastic_bottle": {
         "item_name": "Plastic Bottle",
         "category": "Plastic Waste",
         "bin_name": "Blue Recycling Bin",
         "recyclable": "Yes",
-        "advice": [
-            "Empty contents before disposal",
-            "Rinse if possible",
-            "Separate caps when applicable"
-        ]
+        "advice": ["Empty contents before disposal", "Rinse if possible", "Separate caps when applicable"]
     },
     "plastic_container": {
         "item_name": "Plastic Container",
         "category": "Plastic Waste",
         "bin_name": "Blue Recycling Bin",
         "recyclable": "Yes",
-        "advice": [
-            "Empty contents before disposal",
-            "Rinse if possible",
-            "Separate caps when applicable"
-        ]
+        "advice": ["Empty contents before disposal", "Rinse if possible", "Ensure free of food grease"]
     },
     "plastic_cup": {
         "item_name": "Plastic Cup",
         "category": "Plastic Waste",
         "bin_name": "Blue Recycling Bin",
         "recyclable": "Yes",
-        "advice": [
-            "Empty contents before disposal",
-            "Rinse if possible",
-            "Separate caps when applicable"
-        ]
+        "advice": ["Empty contents before disposal", "Rinse and dry if possible"]
     },
     "plastic_bag": {
         "item_name": "Plastic Bag",
         "category": "Plastic Waste",
         "bin_name": "Blue Recycling Bin",
         "recyclable": "Yes",
-        "advice": [
-            "Empty contents before disposal",
-            "Rinse if possible",
-            "Separate caps when applicable"
-        ]
+        "advice": ["Ensure empty, clean, and dry", "Bunch bags together if possible"]
+    },
+    "biscuit_wrapper": {
+        "item_name": "Biscuit Wrapper",
+        "category": "Plastic Waste",
+        "bin_name": "Blue Recycling Bin",
+        "recyclable": "Yes",
+        "advice": ["Ensure wrapper is empty and dry before recycling"]
+    },
+    "chips_packet": {
+        "item_name": "Chips Packet",
+        "category": "Plastic Waste",
+        "bin_name": "Blue Recycling Bin",
+        "recyclable": "Yes",
+        "advice": ["Shake out all crumbs and flatten before disposal"]
+    },
+    "food_wrapper": {
+        "item_name": "Food Wrapper",
+        "category": "Plastic Waste",
+        "bin_name": "Blue Recycling Bin",
+        "recyclable": "Yes",
+        "advice": ["Clean off food residue before recycling", "Ensure completely dry"]
+    },
+    "shampoo_bottle": {
+        "item_name": "Shampoo Bottle",
+        "category": "Plastic Waste",
+        "bin_name": "Blue Recycling Bin",
+        "recyclable": "Yes",
+        "advice": ["Rinse out shampoo residue completely", "Keep cap attached if recyclable"]
+    },
+    "detergent_bottle": {
+        "item_name": "Detergent Bottle",
+        "category": "Plastic Waste",
+        "bin_name": "Blue Recycling Bin",
+        "recyclable": "Yes",
+        "advice": ["Rinse thoroughly to remove detergent residue", "Cap can be screwed back on"]
+    },
+    "toothpaste_tube": {
+        "item_name": "Toothpaste Tube",
+        "category": "Plastic Waste",
+        "bin_name": "Blue Recycling Bin",
+        "recyclable": "Yes",
+        "advice": ["Squeeze out all remaining paste", "Check if local facility recycles multi-layer tubes"]
     },
     "plastic_packaging": {
         "item_name": "Plastic Packaging",
         "category": "Plastic Waste",
         "bin_name": "Blue Recycling Bin",
         "recyclable": "Yes",
-        "advice": [
-            "Empty contents before disposal",
-            "Rinse if possible",
-            "Separate caps when applicable"
-        ]
+        "advice": ["Ensure packaging is clean and free of food scraps"]
     },
 
-    # Paper Waste
+    # --- PAPER WASTE ---
     "newspaper": {
         "item_name": "Newspaper",
         "category": "Paper Waste",
         "bin_name": "Blue Recycling Bin",
         "recyclable": "Yes",
-        "advice": [
-            "Keep dry",
-            "Flatten cardboard boxes",
-            "Avoid mixing with food waste"
-        ]
-    },
-    "paper_sheet": {
-        "item_name": "Paper Sheet",
-        "category": "Paper Waste",
-        "bin_name": "Blue Recycling Bin",
-        "recyclable": "Yes",
-        "advice": [
-            "Keep dry",
-            "Flatten cardboard boxes",
-            "Avoid mixing with food waste"
-        ]
-    },
-    "magazine": {
-        "item_name": "Magazine",
-        "category": "Paper Waste",
-        "bin_name": "Blue Recycling Bin",
-        "recyclable": "Yes",
-        "advice": [
-            "Keep dry",
-            "Flatten cardboard boxes",
-            "Avoid mixing with food waste"
-        ]
+        "advice": ["Keep dry", "Avoid mixing with soiled paper products"]
     },
     "cardboard_box": {
         "item_name": "Cardboard Box",
         "category": "Paper Waste",
         "bin_name": "Blue Recycling Bin",
         "recyclable": "Yes",
-        "advice": [
-            "Keep dry",
-            "Flatten cardboard boxes",
-            "Avoid mixing with food waste"
-        ]
+        "advice": ["Flatten box to save space", "Remove plastic packing tape"]
+    },
+    "paper_sheet": {
+        "item_name": "Paper Sheet",
+        "category": "Paper Waste",
+        "bin_name": "Blue Recycling Bin",
+        "recyclable": "Yes",
+        "advice": ["Keep dry and clean", "Do not shred unless necessary"]
+    },
+    "magazine": {
+        "item_name": "Magazine",
+        "category": "Paper Waste",
+        "bin_name": "Blue Recycling Bin",
+        "recyclable": "Yes",
+        "advice": ["Keep dry", "Glossy pages are recyclable"]
+    },
+    "notebook": {
+        "item_name": "Notebook",
+        "category": "Paper Waste",
+        "bin_name": "Blue Recycling Bin",
+        "recyclable": "Yes",
+        "advice": ["Remove metal spiral bindings if possible", "Keep pages clean and dry"]
+    },
+    "paper_bag": {
+        "item_name": "Paper Bag",
+        "category": "Paper Waste",
+        "bin_name": "Blue Recycling Bin",
+        "recyclable": "Yes",
+        "advice": ["Ensure no food grease remains", "Remove non-paper handles"]
+    },
+    "carton_box": {
+        "item_name": "Carton Box",
+        "category": "Paper Waste",
+        "bin_name": "Blue Recycling Bin",
+        "recyclable": "Yes",
+        "advice": ["Flatten cartons to save bin space", "Rinse if it held milk or juice"]
+    },
+    "clean_tissue": {
+        "item_name": "Tissue Paper (clean)",
+        "category": "Paper Waste",
+        "bin_name": "Blue Recycling Bin",
+        "recyclable": "Yes",
+        "advice": ["Only clean, unused tissue paper is recyclable", "Soiled tissue goes to landfill"]
     },
     "paper_cup": {
         "item_name": "Paper Cup",
         "category": "Paper Waste",
         "bin_name": "Blue Recycling Bin",
         "recyclable": "Yes",
-        "advice": [
-            "Keep dry",
-            "Flatten cardboard boxes",
-            "Avoid mixing with food waste"
-        ]
+        "advice": ["Empty contents before disposal", "Rinse clean if possible"]
     },
 
-    # Glass Waste
+    # --- GLASS WASTE ---
     "glass_bottle": {
         "item_name": "Glass Bottle",
         "category": "Glass Waste",
         "bin_name": "Glass Recycling Bin",
         "recyclable": "Yes",
-        "advice": [
-            "Empty contents",
-            "Handle broken glass carefully"
-        ]
+        "advice": ["Empty contents and rinse", "Separate metal/plastic caps before recycling"]
     },
     "glass_jar": {
         "item_name": "Glass Jar",
         "category": "Glass Waste",
         "bin_name": "Glass Recycling Bin",
         "recyclable": "Yes",
-        "advice": [
-            "Empty contents",
-            "Handle broken glass carefully"
-        ]
+        "advice": ["Empty contents and rinse", "Separate metal lids"]
+    },
+    "beverage_bottle": {
+        "item_name": "Beverage Bottle",
+        "category": "Glass Waste",
+        "bin_name": "Glass Recycling Bin",
+        "recyclable": "Yes",
+        "advice": ["Rinse liquid residue", "Remove corks or caps"]
     },
 
-    # Metal Waste
+    # --- METAL WASTE ---
     "aluminum_can": {
         "item_name": "Aluminum Can",
         "category": "Metal Waste",
         "bin_name": "Metal Recycling Bin",
         "recyclable": "Yes",
-        "advice": [
-            "Rinse containers",
-            "Remove food residue"
-        ]
+        "advice": ["Empty completely and rinse", "Leave tab attached or push inside"]
     },
     "tin_can": {
         "item_name": "Tin Can",
         "category": "Metal Waste",
         "bin_name": "Metal Recycling Bin",
         "recyclable": "Yes",
-        "advice": [
-            "Rinse containers",
-            "Remove food residue"
-        ]
+        "advice": ["Rinse out food scraps", "Can be crushed to save space"]
+    },
+    "beverage_can": {
+        "item_name": "Beverage Can",
+        "category": "Metal Waste",
+        "bin_name": "Metal Recycling Bin",
+        "recyclable": "Yes",
+        "advice": ["Empty contents completely", "Rinse before recycling"]
+    },
+    "metal_lid": {
+        "item_name": "Metal Lid",
+        "category": "Metal Waste",
+        "bin_name": "Metal Recycling Bin",
+        "recyclable": "Yes",
+        "advice": ["Rinse clean", "Separate from glass jars"]
+    },
+    "foil_container": {
+        "item_name": "Foil Container",
+        "category": "Metal Waste",
+        "bin_name": "Metal Recycling Bin",
+        "recyclable": "Yes",
+        "advice": ["Wipe off food residue", "Ensure it is clean and dry"]
     },
     "metal_container": {
         "item_name": "Metal Container",
         "category": "Metal Waste",
         "bin_name": "Metal Recycling Bin",
         "recyclable": "Yes",
-        "advice": [
-            "Rinse containers",
-            "Remove food residue"
-        ]
+        "advice": ["Rinse container", "Remove any food residues"]
     },
 
-    # Organic Waste
+    # --- ORGANIC WASTE ---
     "banana_peel": {
         "item_name": "Banana Peel",
         "category": "Organic Waste",
         "bin_name": "Green Compost Bin",
         "recyclable": "Yes",
-        "advice": [
-            "Compost when possible",
-            "Do not mix with recyclables"
-        ]
+        "advice": ["Ideal for home composting", "Do not mix with plastics or recyclables"]
     },
     "apple_core": {
         "item_name": "Apple Core",
         "category": "Organic Waste",
         "bin_name": "Green Compost Bin",
         "recyclable": "Yes",
-        "advice": [
-            "Compost when possible",
-            "Do not mix with recyclables"
-        ]
+        "advice": ["Compostable plant matter", "Do not mix with household recyclables"]
     },
-    "fruit_waste": {
-        "item_name": "Fruit Waste",
+    "orange_peel": {
+        "item_name": "Orange Peel",
         "category": "Organic Waste",
         "bin_name": "Green Compost Bin",
         "recyclable": "Yes",
-        "advice": [
-            "Compost when possible",
-            "Do not mix with recyclables"
-        ]
+        "advice": ["Citrus peels are fully compostable", "Adds nitrogen to soil"]
     },
     "vegetable_waste": {
         "item_name": "Vegetable Waste",
         "category": "Organic Waste",
         "bin_name": "Green Compost Bin",
         "recyclable": "Yes",
-        "advice": [
-            "Compost when possible",
-            "Do not mix with recyclables"
-        ]
+        "advice": ["Collect vegetable scraps for composting", "Do not compost if cooked with oil"]
     },
     "food_waste": {
         "item_name": "Food Waste",
         "category": "Organic Waste",
         "bin_name": "Green Compost Bin",
         "recyclable": "Yes",
-        "advice": [
-            "Compost when possible",
-            "Do not mix with recyclables"
-        ]
+        "advice": ["Compost organic scraps", "Dairy/meat waste may need specialized municipal bin"]
+    },
+    "egg_shell": {
+        "item_name": "Egg Shell",
+        "category": "Organic Waste",
+        "bin_name": "Green Compost Bin",
+        "recyclable": "Yes",
+        "advice": ["Crush shells to accelerate decomposition", "Great source of calcium for compost"]
+    },
+    "tea_leaves": {
+        "item_name": "Tea Leaves",
+        "category": "Organic Waste",
+        "bin_name": "Green Compost Bin",
+        "recyclable": "Yes",
+        "advice": ["Separate from plastic tea bags", "Compost tea leaves directly"]
+    },
+    "fruit_waste": {
+        "item_name": "Fruit Waste",
+        "category": "Organic Waste",
+        "bin_name": "Green Compost Bin",
+        "recyclable": "Yes",
+        "advice": ["Compost fruit scraps", "Avoid stickers on fruit skin"]
     },
 
-    # E-Waste
+    # --- E-WASTE ---
     "battery": {
         "item_name": "Battery",
         "category": "E-Waste",
         "bin_name": "E-Waste Collection Bin",
         "recyclable": "Special Processing",
-        "advice": [
-            "Do not dispose in household trash",
-            "Take to authorized E-Waste collection centers",
-            "Batteries require special processing"
-        ]
+        "advice": ["Never place batteries in standard bins", "Tape terminals to prevent fire hazard", "Drop off at specialized centers"]
     },
     "mobile_phone": {
         "item_name": "Mobile Phone",
         "category": "E-Waste",
         "bin_name": "E-Waste Collection Bin",
         "recyclable": "Special Processing",
-        "advice": [
-            "Do not dispose in household trash",
-            "Take to authorized E-Waste collection centers",
-            "Batteries require special processing"
-        ]
+        "advice": ["E-waste must go to electronic collection centers", "Erase personal data before recycling"]
     },
     "charger": {
         "item_name": "Charger",
         "category": "E-Waste",
         "bin_name": "E-Waste Collection Bin",
         "recyclable": "Special Processing",
-        "advice": [
-            "Do not dispose in household trash",
-            "Take to authorized E-Waste collection centers",
-            "Batteries require special processing"
-        ]
-    },
-    "keyboard": {
-        "item_name": "Keyboard",
-        "category": "E-Waste",
-        "bin_name": "E-Waste Collection Bin",
-        "recyclable": "Special Processing",
-        "advice": [
-            "Do not dispose in household trash",
-            "Take to authorized E-Waste collection centers",
-            "Batteries require special processing"
-        ]
-    },
-    "mouse": {
-        "item_name": "Mouse",
-        "category": "E-Waste",
-        "bin_name": "E-Waste Collection Bin",
-        "recyclable": "Special Processing",
-        "advice": [
-            "Do not dispose in household trash",
-            "Take to authorized E-Waste collection centers",
-            "Batteries require special processing"
-        ]
+        "advice": ["Take to authorized E-waste collection centers", "Do not cut cords"]
     },
     "laptop": {
         "item_name": "Laptop",
         "category": "E-Waste",
         "bin_name": "E-Waste Collection Bin",
         "recyclable": "Special Processing",
-        "advice": [
-            "Do not dispose in household trash",
-            "Take to authorized E-Waste collection centers",
-            "Batteries require special processing"
-        ]
+        "advice": ["Remove battery if possible", "Erase hard drive for safety", "Drop off at E-waste points"]
+    },
+    "keyboard": {
+        "item_name": "Keyboard",
+        "category": "E-Waste",
+        "bin_name": "E-Waste Collection Bin",
+        "recyclable": "Special Processing",
+        "advice": ["Drop off at E-waste collection centers", "Separate batteries if wireless"]
+    },
+    "mouse": {
+        "item_name": "Mouse",
+        "category": "E-Waste",
+        "bin_name": "E-Waste Collection Bin",
+        "recyclable": "Special Processing",
+        "advice": ["Wireless mouse batteries should be recycled separately", "Drop device at E-waste bin"]
     },
     "earphones": {
         "item_name": "Earphones",
         "category": "E-Waste",
         "bin_name": "E-Waste Collection Bin",
         "recyclable": "Special Processing",
-        "advice": [
-            "Do not dispose in household trash",
-            "Take to authorized E-Waste collection centers",
-            "Batteries require special processing"
-        ]
+        "advice": ["Recycle wired or wireless earphones at E-waste collection centers"]
     },
     "power_bank": {
         "item_name": "Power Bank",
         "category": "E-Waste",
         "bin_name": "E-Waste Collection Bin",
         "recyclable": "Special Processing",
-        "advice": [
-            "Do not dispose in household trash",
-            "Take to authorized E-Waste collection centers",
-            "Batteries require special processing"
-        ]
+        "advice": ["Contains lithium-ion battery", "Dispose at specialized E-waste locations only"]
+    },
+    "usb_cable": {
+        "item_name": "USB Cable",
+        "category": "E-Waste",
+        "bin_name": "E-Waste Collection Bin",
+        "recyclable": "Special Processing",
+        "advice": ["Take to electronics recycling drop boxes", "Do not throw in general trash"]
+    },
+    "remote_control": {
+        "item_name": "Remote Control",
+        "category": "E-Waste",
+        "bin_name": "E-Waste Collection Bin",
+        "recyclable": "Special Processing",
+        "advice": ["Remove AAA/AA batteries first", "Recycle remote at E-waste point"]
     },
     "electronic_components": {
         "item_name": "Electronic Components",
         "category": "E-Waste",
         "bin_name": "E-Waste Collection Bin",
         "recyclable": "Special Processing",
-        "advice": [
-            "Do not dispose in household trash",
-            "Take to authorized E-Waste collection centers",
-            "Batteries require special processing"
-        ]
+        "advice": ["Recycle circuit boards, wires, and electronic assemblies at E-waste points"]
     },
 
-    # Landfill Waste
+    # --- NON-RECYCLABLE / LANDFILL WASTE ---
     "dirty_tissue": {
         "item_name": "Dirty Tissue",
         "category": "Landfill Waste",
         "bin_name": "General Waste Bin",
         "recyclable": "No",
-        "advice": [
-            "Dispose safely",
-            "Cannot be recycled through standard recycling systems"
-        ]
+        "advice": ["Dispose safely in general waste", "Soiled tissues contaminate paper recycling"]
     },
-    "used_sanitary_waste": {
-        "item_name": "Used Sanitary Waste",
+    "used_mask": {
+        "item_name": "Used Mask",
         "category": "Landfill Waste",
         "bin_name": "General Waste Bin",
         "recyclable": "No",
-        "advice": [
-            "Dispose safely",
-            "Cannot be recycled through standard recycling systems"
-        ]
+        "advice": ["Cut ear loops before disposal to protect wildlife", "Place in general waste bin"]
+    },
+    "used_sanitary_waste": {
+        "item_name": "Sanitary Waste",
+        "category": "Landfill Waste",
+        "bin_name": "General Waste Bin",
+        "recyclable": "No",
+        "advice": ["Wrap securely before disposal", "Dispose in general waste bin"]
+    },
+    "broken_ceramics": {
+        "item_name": "Broken Ceramic",
+        "category": "Landfill Waste",
+        "bin_name": "General Waste Bin",
+        "recyclable": "No",
+        "advice": ["Wrap broken pieces in thick paper for safety", "Place in general waste"]
     },
     "contaminated_packaging": {
         "item_name": "Contaminated Packaging",
         "category": "Landfill Waste",
         "bin_name": "General Waste Bin",
         "recyclable": "No",
-        "advice": [
-            "Dispose safely",
-            "Cannot be recycled through standard recycling systems"
-        ]
+        "advice": ["Soiled packaging cannot be recycled", "Place in general waste bin"]
     },
-    "broken_ceramics": {
-        "item_name": "Broken Ceramics",
+    "thermocol": {
+        "item_name": "Thermocol",
         "category": "Landfill Waste",
         "bin_name": "General Waste Bin",
         "recyclable": "No",
-        "advice": [
-            "Dispose safely",
-            "Cannot be recycled through standard recycling systems"
-        ]
+        "advice": ["Non-biodegradable and hard to recycle", "Place in general waste bin"]
     },
     "trash": {
         "item_name": "General Trash",
         "category": "Landfill Waste",
         "bin_name": "General Waste Bin",
         "recyclable": "No",
-        "advice": [
-            "Dispose safely",
-            "Cannot be recycled through standard recycling systems"
-        ]
+        "advice": ["Dispose safely in general waste bin"]
+    },
+    "pen": {
+        "item_name": "Pen",
+        "category": "Landfill Waste",
+        "bin_name": "General Waste Bin",
+        "recyclable": "No",
+        "advice": ["Standard pens are non-recyclable due to mixed metal, plastic, and ink"]
+    },
+    "chair": {
+        "item_name": "Chair",
+        "category": "Landfill Waste",
+        "bin_name": "General Waste Bin",
+        "recyclable": "No",
+        "advice": ["Donate if in usable condition", "Otherwise dispose as bulky general waste"]
+    },
+    "clothes": {
+        "item_name": "Clothes",
+        "category": "Landfill Waste",
+        "bin_name": "General Waste Bin",
+        "recyclable": "No",
+        "advice": ["Donate to charity if wearable", "Otherwise throw in general waste or textile recycling drop-boxes"]
+    },
+    "shoes": {
+        "item_name": "Shoes",
+        "category": "Landfill Waste",
+        "bin_name": "General Waste Bin",
+        "recyclable": "No",
+        "advice": ["Consider donation if still in good shape", "Otherwise throw in general waste"]
+    },
+    "wood": {
+        "item_name": "Wood Waste",
+        "category": "Landfill Waste",
+        "bin_name": "General Waste Bin",
+        "recyclable": "No",
+        "advice": ["Clean untreated wood can be recycled/composted; treated wood goes to general waste"]
     }
 }
 
@@ -426,36 +504,62 @@ COORDINATES_MAP = {
     "plastic_container": [0.40, 0.45, 0.70, 0.88],
     "plastic_cup": [0.60, 0.15, 0.85, 0.50],
     "plastic_bag": [0.72, 0.15, 0.95, 0.55],
+    "biscuit_wrapper": [0.3, 0.3, 0.7, 0.7],
+    "chips_packet": [0.3, 0.3, 0.7, 0.7],
+    "food_wrapper": [0.3, 0.3, 0.7, 0.7],
+    "shampoo_bottle": [0.3, 0.3, 0.7, 0.7],
+    "detergent_bottle": [0.3, 0.3, 0.7, 0.7],
+    "toothpaste_tube": [0.3, 0.3, 0.7, 0.7],
     "plastic_packaging": [0.3, 0.3, 0.7, 0.7],
     "newspaper": [0.05, 0.20, 0.40, 0.70],
     "paper_sheet": [0.05, 0.20, 0.40, 0.70],
     "magazine": [0.05, 0.20, 0.40, 0.70],
     "cardboard_box": [0.12, 0.40, 0.55, 0.88],
+    "notebook": [0.3, 0.3, 0.7, 0.7],
+    "paper_bag": [0.3, 0.3, 0.7, 0.7],
+    "carton_box": [0.3, 0.3, 0.7, 0.7],
+    "clean_tissue": [0.3, 0.3, 0.7, 0.7],
     "paper_cup": [0.60, 0.15, 0.85, 0.50],
     "glass_bottle": [0.38, 0.08, 0.68, 0.90],
     "glass_jar": [0.70, 0.45, 0.95, 0.88],
+    "beverage_bottle": [0.3, 0.3, 0.7, 0.7],
     "aluminum_can": [0.05, 0.30, 0.35, 0.75],
     "tin_can": [0.40, 0.20, 0.68, 0.65],
+    "beverage_can": [0.3, 0.3, 0.7, 0.7],
+    "metal_lid": [0.3, 0.3, 0.7, 0.7],
+    "foil_container": [0.3, 0.3, 0.7, 0.7],
     "metal_container": [0.40, 0.20, 0.68, 0.65],
     "banana_peel": [0.10, 0.45, 0.45, 0.90],
     "apple_core": [0.50, 0.40, 0.90, 0.85],
-    "fruit_waste": [0.50, 0.40, 0.90, 0.85],
+    "orange_peel": [0.3, 0.3, 0.7, 0.7],
     "vegetable_waste": [0.20, 0.20, 0.60, 0.60],
     "food_waste": [0.50, 0.40, 0.90, 0.85],
+    "egg_shell": [0.3, 0.3, 0.7, 0.7],
+    "tea_leaves": [0.3, 0.3, 0.7, 0.7],
+    "fruit_waste": [0.50, 0.40, 0.90, 0.85],
     "battery": [0.05, 0.15, 0.30, 0.55],
     "mobile_phone": [0.1, 0.1, 0.9, 0.9],
     "charger": [0.32, 0.40, 0.62, 0.80],
+    "laptop": [0.1, 0.1, 0.9, 0.9],
     "keyboard": [0.10, 0.65, 0.90, 0.95],
     "mouse": [0.45, 0.30, 0.75, 0.70],
-    "laptop": [0.1, 0.1, 0.9, 0.9],
     "earphones": [0.32, 0.40, 0.62, 0.80],
     "power_bank": [0.32, 0.40, 0.62, 0.80],
+    "usb_cable": [0.3, 0.3, 0.7, 0.7],
+    "remote_control": [0.3, 0.3, 0.7, 0.7],
     "electronic_components": [0.45, 0.30, 0.75, 0.70],
     "dirty_tissue": [0.3, 0.3, 0.7, 0.7],
+    "used_mask": [0.3, 0.3, 0.7, 0.7],
     "used_sanitary_waste": [0.3, 0.3, 0.7, 0.7],
-    "contaminated_packaging": [0.3, 0.3, 0.7, 0.7],
     "broken_ceramics": [0.3, 0.3, 0.7, 0.7],
-    "trash": [0.3, 0.3, 0.7, 0.7]
+    "contaminated_packaging": [0.3, 0.3, 0.7, 0.7],
+    "thermocol": [0.3, 0.3, 0.7, 0.7],
+    "trash": [0.3, 0.3, 0.7, 0.7],
+    "pen": [0.3, 0.3, 0.7, 0.7],
+    "chair": [0.1, 0.1, 0.9, 0.9],
+    "clothes": [0.1, 0.1, 0.9, 0.9],
+    "shoes": [0.1, 0.1, 0.9, 0.9],
+    "wood": [0.1, 0.1, 0.9, 0.9]
 }
 
 def get_db_connection():
@@ -610,37 +714,67 @@ def refine_with_groq_vision(image_path, detected_class):
             "- 'plastic_container' (tubs, boxes, trays)\n"
             "- 'plastic_cup' (plastic cups)\n"
             "- 'plastic_bag' (shopping bags, carrier bags)\n"
-            "- 'plastic_packaging' (biscuit wrappers, chip packets, thin wrappers, snack packaging)\n"
+            "- 'biscuit_wrapper' (biscuit wrappers, plastic snack wrappers)\n"
+            "- 'chips_packet' (chips packets, potato chips bags)\n"
+            "- 'food_wrapper' (food wrappers, plastic wrappers)\n"
+            "- 'shampoo_bottle' (shampoo bottles)\n"
+            "- 'detergent_bottle' (liquid detergent bottles)\n"
+            "- 'toothpaste_tube' (toothpaste tubes)\n"
+            "- 'plastic_packaging' (other general plastic packaging)\n"
             "- 'newspaper' (newspapers, flyers)\n"
+            "- 'cardboard_box' (cartons, cardboard packaging)\n"
             "- 'paper_sheet' (writing paper, documents)\n"
             "- 'magazine' (glossy magazines)\n"
-            "- 'cardboard_box' (cartons, cardboard packaging)\n"
-            "- 'paper_cup' (coffee cups)\n"
+            "- 'notebook' (notebooks, pads, paper books)\n"
+            "- 'paper_bag' (paper bags, brown bags)\n"
+            "- 'carton_box' (carton boxes, milk/juice cartons)\n"
+            "- 'clean_tissue' (clean, unused tissue paper)\n"
+            "- 'paper_cup' (paper cups)\n"
             "- 'glass_bottle' (glass bottles)\n"
             "- 'glass_jar' (glass jars)\n"
+            "- 'beverage_bottle' (glass beverage bottles)\n"
             "- 'aluminum_can' (soda cans, beverage cans)\n"
-            "- 'tin_can' (soup cans, canned food)\n"
-            "- 'metal_container' (other metal boxes)\n"
+            "- 'tin_can' (tin food cans)\n"
+            "- 'beverage_can' (metal beverage cans)\n"
+            "- 'metal_lid' (metal lids, bottle caps)\n"
+            "- 'foil_container' (foil containers, aluminum foil sheets)\n"
+            "- 'metal_container' (other metal containers)\n"
             "- 'banana_peel' (banana peel)\n"
             "- 'apple_core' (apple core)\n"
-            "- 'fruit_waste' (other fruits)\n"
+            "- 'orange_peel' (orange peel)\n"
             "- 'vegetable_waste' (vegetables)\n"
             "- 'food_waste' (leftover food)\n"
+            "- 'egg_shell' (egg shells)\n"
+            "- 'tea_leaves' (used tea leaves)\n"
+            "- 'fruit_waste' (other fruits)\n"
             "- 'battery' (batteries)\n"
             "- 'mobile_phone' (smartphones, phones)\n"
+            "- 'charger' (phone chargers, power adapters)\n"
+            "- 'laptop' (laptops)\n"
             "- 'keyboard' (keyboards)\n"
             "- 'mouse' (mice)\n"
-            "- 'laptop' (laptops)\n"
+            "- 'earphones' (earphones/headphones/airpods)\n"
+            "- 'power_bank' (power banks)\n"
+            "- 'usb_cable' (USB cables, charging cords)\n"
+            "- 'remote_control' (remote controls)\n"
+            "- 'electronic_components' (circuits, wires, boards)\n"
             "- 'dirty_tissue' (used tissues, napkins)\n"
+            "- 'used_mask' (used face masks)\n"
             "- 'used_sanitary_waste' (diapers, sanitary pads)\n"
-            "- 'broken_ceramics' (plates, mugs)\n"
+            "- 'broken_ceramics' (plates, mugs, broken ceramic)\n"
             "- 'contaminated_packaging' (very greasy/dirty packaging)\n"
-            "- 'trash' (other general landfill waste)\n\n"
+            "- 'thermocol' (thermocol, polystyrene packaging)\n"
+            "- 'trash' (other general landfill waste)\n"
+            "- 'pen' (writing pens, markers, pencils)\n"
+            "- 'chair' (chairs, seats)\n"
+            "- 'clothes' (shirts, pants, fabrics)\n"
+            "- 'shoes' (shoes, sneakers, boots)\n"
+            "- 'wood' (wood blocks, branches, lumber)\n\n"
             "Return a JSON object with a single key 'refined_key' containing the chosen string. Do not return any other text, just the raw JSON."
         )
         
         payload = {
-            "model": "llama-3.2-11b-vision-preview",
+            "model": "meta-llama/llama-4-scout-17b-16e-instruct",
             "messages": [
                 {
                     "role": "user",
@@ -668,6 +802,121 @@ def refine_with_groq_vision(image_path, detected_class):
         print("Groq Vision refinement failed:", e)
     return None
 
+def get_all_objects_from_groq_vision(image_path):
+    print(f"[*] get_all_objects_from_groq_vision called for {image_path}")
+    if not GROQ_API_KEY:
+        print("[!] GROQ_API_KEY is empty inside get_all_objects_from_groq_vision!")
+        return []
+    try:
+        with open(image_path, "rb") as image_file:
+            base64_image = base64.b64encode(image_file.read()).decode('utf-8')
+            
+        url = "https://api.groq.com/openai/v1/chat/completions"
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {GROQ_API_KEY}"
+        }
+        
+        prompt = (
+            "Analyze the image of this waste item and identify the main objects shown.\n"
+            "Map each object to one of the following exact keys:\n"
+            "- 'plastic_bottle' (bottles for water, soda, milk)\n"
+            "- 'plastic_container' (tubs, boxes, trays)\n"
+            "- 'plastic_cup' (plastic cups)\n"
+            "- 'plastic_bag' (shopping bags, carrier bags)\n"
+            "- 'biscuit_wrapper' (biscuit wrappers, plastic snack wrappers)\n"
+            "- 'chips_packet' (chips packets, potato chips bags)\n"
+            "- 'food_wrapper' (food wrappers, plastic wrappers)\n"
+            "- 'shampoo_bottle' (shampoo bottles)\n"
+            "- 'detergent_bottle' (liquid detergent bottles)\n"
+            "- 'toothpaste_tube' (toothpaste tubes)\n"
+            "- 'plastic_packaging' (other general plastic packaging)\n"
+            "- 'newspaper' (newspapers, flyers)\n"
+            "- 'cardboard_box' (cartons, cardboard packaging)\n"
+            "- 'paper_sheet' (writing paper, documents)\n"
+            "- 'magazine' (glossy magazines)\n"
+            "- 'notebook' (notebooks, pads, paper books)\n"
+            "- 'paper_bag' (paper bags, brown bags)\n"
+            "- 'carton_box' (carton boxes, milk/juice cartons)\n"
+            "- 'clean_tissue' (clean, unused tissue paper)\n"
+            "- 'paper_cup' (paper cups)\n"
+            "- 'glass_bottle' (glass bottles)\n"
+            "- 'glass_jar' (glass jars)\n"
+            "- 'beverage_bottle' (glass beverage bottles)\n"
+            "- 'aluminum_can' (soda cans, beverage cans)\n"
+            "- 'tin_can' (tin food cans)\n"
+            "- 'beverage_can' (metal beverage cans)\n"
+            "- 'metal_lid' (metal lids, bottle caps)\n"
+            "- 'foil_container' (foil containers, aluminum foil sheets)\n"
+            "- 'metal_container' (other metal containers)\n"
+            "- 'banana_peel' (banana peel)\n"
+            "- 'apple_core' (apple core)\n"
+            "- 'orange_peel' (orange peel)\n"
+            "- 'vegetable_waste' (vegetables)\n"
+            "- 'food_waste' (leftover food)\n"
+            "- 'egg_shell' (egg shells)\n"
+            "- 'tea_leaves' (used tea leaves)\n"
+            "- 'fruit_waste' (other fruits)\n"
+            "- 'battery' (batteries)\n"
+            "- 'mobile_phone' (smartphones, phones)\n"
+            "- 'charger' (phone chargers, power adapters)\n"
+            "- 'laptop' (laptops)\n"
+            "- 'keyboard' (keyboards)\n"
+            "- 'mouse' (mice)\n"
+            "- 'earphones' (earphones/headphones/airpods)\n"
+            "- 'power_bank' (power banks)\n"
+            "- 'usb_cable' (USB cables, charging cords)\n"
+            "- 'remote_control' (remote controls)\n"
+            "- 'electronic_components' (circuits, wires, boards)\n"
+            "- 'dirty_tissue' (used tissues, napkins)\n"
+            "- 'used_mask' (used face masks)\n"
+            "- 'used_sanitary_waste' (diapers, sanitary pads)\n"
+            "- 'broken_ceramics' (plates, mugs, broken ceramic)\n"
+            "- 'contaminated_packaging' (very greasy/dirty packaging)\n"
+            "- 'thermocol' (thermocol, polystyrene packaging)\n"
+            "- 'trash' (other general landfill waste)\n"
+            "- 'pen' (writing pens, markers, pencils)\n"
+            "- 'chair' (chairs, seats)\n"
+            "- 'clothes' (shirts, pants, fabrics)\n"
+            "- 'shoes' (shoes, sneakers, boots)\n"
+            "- 'wood' (wood blocks, branches, lumber)\n\n"
+            "Return a JSON object with a key 'detected_keys' containing the list of matched keys. Do not return any other text, just the raw JSON."
+        )
+        
+        payload = {
+            "model": "meta-llama/llama-4-scout-17b-16e-instruct",
+            "messages": [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/jpeg;base64,{base64_image}"
+                            }
+                        }
+                    ]
+                }
+            ],
+            "temperature": 0.1,
+            "response_format": {"type": "json_object"}
+        }
+        
+        response = requests.post(url, headers=headers, json=payload, timeout=8)
+        print(f"[*] Groq Vision response code: {response.status_code}")
+        if response.status_code == 200:
+            res_data = response.json()
+            content = json.loads(res_data['choices'][0]['message']['content'])
+            keys = content.get('detected_keys', [])
+            print(f"[*] Groq Vision detected keys: {keys}")
+            return keys
+        else:
+            print(f"[!] Groq Vision failed: {response.text}")
+    except Exception as e:
+        print("Groq Vision complete analysis failed:", e)
+    return []
+
 def run_yolo_detection(image_path, user_description=""):
     detected_objects = []
     search_text = (user_description + " " + os.path.basename(image_path)).lower()
@@ -679,6 +928,69 @@ def run_yolo_detection(image_path, user_description=""):
     triggered_keys = []
     
     keyword_rules = [
+        # Plastic Waste
+        ("plastic bottle", "plastic_bottle"),
+        ("shampoo bottle", "shampoo_bottle"),
+        ("detergent bottle", "detergent_bottle"),
+        ("toothpaste", "toothpaste_tube"),
+        ("biscuit wrapper", "biscuit_wrapper"),
+        ("chips packet", "chips_packet"),
+        ("chips bag", "chips_packet"),
+        ("food wrapper", "food_wrapper"),
+        ("wrapper", "food_wrapper"),
+        ("plastic container", "plastic_container"),
+        ("bottle", "plastic_bottle"),
+        ("container", "plastic_container"),
+        ("plastic cup", "plastic_cup"),
+        ("plastic bag", "plastic_bag"),
+        ("bag", "plastic_bag"),
+        ("plastic packaging", "plastic_packaging"),
+        ("packaging", "plastic_packaging"),
+        
+        # Paper Waste
+        ("newspaper", "newspaper"),
+        ("notebook", "notebook"),
+        ("paper bag", "paper_bag"),
+        ("carton box", "carton_box"),
+        ("clean tissue", "clean_tissue"),
+        ("paper sheet", "paper_sheet"),
+        ("paper", "paper_sheet"),
+        ("magazine", "magazine"),
+        ("cardboard box", "cardboard_box"),
+        ("cardboard", "cardboard_box"),
+        ("box", "cardboard_box"),
+        ("paper cup", "paper_cup"),
+        
+        # Glass Waste
+        ("glass bottle", "glass_bottle"),
+        ("beverage bottle", "beverage_bottle"),
+        ("glass jar", "glass_jar"),
+        ("jar", "glass_jar"),
+        
+        # Metal Waste
+        ("aluminum can", "aluminum_can"),
+        ("tin can", "tin_can"),
+        ("beverage can", "beverage_can"),
+        ("metal lid", "metal_lid"),
+        ("foil container", "foil_container"),
+        ("can", "aluminum_can"),
+        ("metal container", "metal_container"),
+        ("metal", "metal_container"),
+        
+        # Organic Waste
+        ("banana peel", "banana_peel"),
+        ("banana", "banana_peel"),
+        ("peel", "banana_peel"),
+        ("apple core", "apple_core"),
+        ("apple", "apple_core"),
+        ("orange peel", "orange_peel"),
+        ("egg shell", "egg_shell"),
+        ("eggshell", "egg_shell"),
+        ("tea leaves", "tea_leaves"),
+        ("fruit", "fruit_waste"),
+        ("vegetable", "vegetable_waste"),
+        ("food", "food_waste"),
+        
         # E-Waste
         ("battery", "battery"),
         ("charger", "charger"),
@@ -691,59 +1003,29 @@ def run_yolo_detection(image_path, user_description=""):
         ("headphone", "earphones"),
         ("power bank", "power_bank"),
         ("powerbank", "power_bank"),
+        ("usb cable", "usb_cable"),
+        ("usb", "usb_cable"),
+        ("cable", "usb_cable"),
+        ("remote control", "remote_control"),
+        ("remote", "remote_control"),
         ("electronic", "electronic_components"),
         
-        # Plastic
-        ("plastic bottle", "plastic_bottle"),
-        ("bottle", "plastic_bottle"),
-        ("plastic container", "plastic_container"),
-        ("container", "plastic_container"),
-        ("plastic cup", "plastic_cup"),
-        ("plastic bag", "plastic_bag"),
-        ("bag", "plastic_bag"),
-        ("plastic packaging", "plastic_packaging"),
-        ("packaging", "plastic_packaging"),
-        
-        # Paper
-        ("newspaper", "newspaper"),
-        ("paper sheet", "paper_sheet"),
-        ("paper", "paper_sheet"),
-        ("magazine", "magazine"),
-        ("cardboard box", "cardboard_box"),
-        ("cardboard", "cardboard_box"),
-        ("box", "cardboard_box"),
-        ("paper cup", "paper_cup"),
-        
-        # Glass
-        ("glass bottle", "glass_bottle"),
-        ("glass jar", "glass_jar"),
-        ("jar", "glass_jar"),
-        
-        # Metal
-        ("aluminum can", "aluminum_can"),
-        ("tin can", "tin_can"),
-        ("can", "aluminum_can"),
-        ("metal container", "metal_container"),
-        ("metal", "metal_container"),
-        
-        # Organic
-        ("banana peel", "banana_peel"),
-        ("banana", "banana_peel"),
-        ("peel", "banana_peel"),
-        ("apple core", "apple_core"),
-        ("apple", "apple_core"),
-        ("fruit", "fruit_waste"),
-        ("vegetable", "vegetable_waste"),
-        ("food", "food_waste"),
-        
-        # Landfill
+        # Landfill / Non-Recyclable
         ("dirty tissue", "dirty_tissue"),
         ("tissue", "dirty_tissue"),
+        ("used mask", "used_mask"),
+        ("mask", "used_mask"),
         ("sanitary", "used_sanitary_waste"),
         ("diaper", "used_sanitary_waste"),
         ("contaminated", "contaminated_packaging"),
         ("ceramic", "broken_ceramics"),
-        ("broken", "broken_ceramics")
+        ("broken", "broken_ceramics"),
+        ("thermocol", "thermocol"),
+        ("pen", "pen"),
+        ("chair", "chair"),
+        ("clothes", "clothes"),
+        ("shoes", "shoes"),
+        ("wood", "wood")
     ]
     
     for kw, key in keyword_rules:
@@ -853,9 +1135,15 @@ def run_yolo_detection(image_path, user_description=""):
                     continue  # Skip because we already have a more specific detection for this area
                     
                 # Map custom model classes to our specific keys using vision refinement and keyword matching
-                key = None
                 if cls_name == "battery":
-                    key = "battery"
+                    if "pen" in search_text:
+                        key = "pen"
+                    else:
+                        refined = refine_with_groq_vision(image_path, "battery")
+                        if refined in ["pen", "battery", "charger", "mobile_phone", "power_bank", "usb_cable", "remote_control"]:
+                            key = refined
+                        else:
+                            key = "battery"
                 elif cls_name == "biological":
                     if "banana" in search_text:
                         key = "banana_peel"
@@ -863,7 +1151,7 @@ def run_yolo_detection(image_path, user_description=""):
                         key = "apple_core"
                     else:
                         refined = refine_with_groq_vision(image_path, "biological")
-                        if refined in ["banana_peel", "apple_core", "fruit_waste", "vegetable_waste", "food_waste"]:
+                        if refined in ["banana_peel", "apple_core", "orange_peel", "vegetable_waste", "food_waste", "egg_shell", "tea_leaves", "fruit_waste"]:
                             key = refined
                         else:
                             key = "food_waste"
@@ -876,7 +1164,7 @@ def run_yolo_detection(image_path, user_description=""):
                         key = "tin_can"
                     else:
                         refined = refine_with_groq_vision(image_path, "metal")
-                        if refined in ["aluminum_can", "tin_can", "metal_container"]:
+                        if refined in ["aluminum_can", "tin_can", "beverage_can", "metal_lid", "foil_container", "metal_container"]:
                             key = refined
                         else:
                             key = "aluminum_can"
@@ -887,7 +1175,7 @@ def run_yolo_detection(image_path, user_description=""):
                         key = "paper_cup"
                     else:
                         refined = refine_with_groq_vision(image_path, "paper")
-                        if refined in ["newspaper", "paper_sheet", "magazine", "cardboard_box", "paper_cup"]:
+                        if refined in ["newspaper", "paper_sheet", "magazine", "notebook", "paper_bag", "carton_box", "clean_tissue", "paper_cup"]:
                             key = refined
                         else:
                             key = "newspaper"
@@ -899,7 +1187,7 @@ def run_yolo_detection(image_path, user_description=""):
                             key = "plastic_packaging"
                     else:
                         refined = refine_with_groq_vision(image_path, "plastic")
-                        if refined in ["plastic_bottle", "plastic_container", "plastic_cup", "plastic_bag", "plastic_packaging"]:
+                        if refined in ["plastic_bottle", "plastic_container", "plastic_cup", "plastic_bag", "biscuit_wrapper", "chips_packet", "food_wrapper", "shampoo_bottle", "detergent_bottle", "toothpaste_tube", "plastic_packaging"]:
                             key = refined
                         else:
                             key = "plastic_bottle"
@@ -910,7 +1198,7 @@ def run_yolo_detection(image_path, user_description=""):
                         key = "used_sanitary_waste"
                     else:
                         refined = refine_with_groq_vision(image_path, "trash")
-                        if refined in ["dirty_tissue", "used_sanitary_waste", "broken_ceramics", "contaminated_packaging", "trash"]:
+                        if refined in ["dirty_tissue", "used_mask", "used_sanitary_waste", "broken_ceramics", "contaminated_packaging", "thermocol", "trash", "pen", "chair", "clothes", "shoes", "wood"]:
                             key = refined
                         else:
                             key = "trash"
@@ -959,6 +1247,33 @@ def run_yolo_detection(image_path, user_description=""):
                         "box": det["box"]
                     })
                     
+        # Overwrite/refine resolved detections with Groq Vision if available
+        if GROQ_API_KEY:
+            groq_keys = get_all_objects_from_groq_vision(image_path)
+            if groq_keys:
+                # If YOLO detected boxes, we override their labels with the keys from Groq Vision
+                if resolved_detections:
+                    for i, key in enumerate(groq_keys):
+                        if i < len(resolved_detections):
+                            resolved_detections[i]["key"] = key
+                            if key in OBJECT_MAPPING:
+                                resolved_detections[i]["conf"] = max(resolved_detections[i]["conf"], 0.88)
+                        else:
+                            # Groq found more objects than YOLO, add with default box
+                            resolved_detections.append({
+                                "key": key,
+                                "conf": 0.88,
+                                "box": COORDINATES_MAP.get(key, [0.3, 0.3, 0.7, 0.7])
+                            })
+                else:
+                    # YOLO detected nothing, but Groq found objects, so use Groq detections with default boxes
+                    for key in groq_keys:
+                        resolved_detections.append({
+                            "key": key,
+                            "conf": 0.88,
+                            "box": COORDINATES_MAP.get(key, [0.3, 0.3, 0.7, 0.7])
+                        })
+                        
         # Add resolved detections to final detected_objects list
         for res in resolved_detections:
             key = res["key"]
@@ -1005,10 +1320,11 @@ def classify():
     if file.filename == '':
         return jsonify({"success": False, "message": "Empty file name"}), 400
         
-    # Save file
+    # Save file to system temp directory so VS Code workspace doesn't watch/track it
+    import tempfile
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"{timestamp}_{file.filename}"
-    file_path = os.path.join(UPLOAD_FOLDER, filename)
+    file_path = os.path.join(tempfile.gettempdir(), filename)
     file.save(file_path)
     
     # Run YOLO detection
@@ -1194,16 +1510,24 @@ def stats():
     if not email:
         return jsonify({
             "total_scans": 0,
+            "total_objects": 0,
             "plastic_count": 0,
             "paper_count": 0,
-            "ewaste_count": 0
+            "ewaste_count": 0,
+            "organic_count": 0,
+            "landfill_count": 0
         })
         
     conn = get_db_connection()
     c = conn.cursor()
     
+    # Calculate distinct scan operations by grouping by unique timestamp
+    c.execute("SELECT COUNT(DISTINCT scan_date) FROM scans WHERE user_email=?", (email,))
+    total_scans = c.fetchone()[0]
+    
+    # Calculate total individual objects detected
     c.execute("SELECT COUNT(*) FROM scans WHERE user_email=?", (email,))
-    total = c.fetchone()[0]
+    total_objects = c.fetchone()[0]
     
     c.execute("SELECT COUNT(*) FROM scans WHERE user_email=? AND category='Plastic'", (email,))
     plastic = c.fetchone()[0]
@@ -1223,7 +1547,8 @@ def stats():
     conn.close()
     
     return jsonify({
-        "total_scans": total,
+        "total_scans": total_scans,
+        "total_objects": total_objects,
         "plastic_count": plastic,
         "paper_count": paper,
         "ewaste_count": ewaste,

@@ -10,6 +10,7 @@ async function loadDashboardStats() {
 
         // Update card metrics
         document.getElementById('stat-total').innerText = stats.total_scans;
+        document.getElementById('stat-objects').innerText = stats.total_objects;
         document.getElementById('stat-plastic').innerText = stats.plastic_count;
         document.getElementById('stat-organic').innerText = stats.organic_count;
         document.getElementById('stat-ewaste').innerText = stats.ewaste_count;
