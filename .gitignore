@@ -15,3 +15,7 @@ __pycache__/
 # Upload directories
 static/uploads/*
 !static/uploads/.gitkeep
+
+# Node dependencies
+node_modules/
+dist/
